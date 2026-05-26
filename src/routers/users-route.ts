@@ -1,5 +1,13 @@
 import { Elysia, t } from "elysia";
-import { registerUser, loginUser, getCurrentUser } from "../services/users-service";
+import { registerUser, loginUser, getCurrentUser, logoutUser } from "../services/users-service";
+
+function extractToken(headers: Record<string, string>): string {
+  const authHeader = headers["authorization"];
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    throw new Error("token tidak valid atau token expired");
+  }
+  return authHeader.substring(7);
+}
 
 export const usersRoute = new Elysia()
   .post(
@@ -58,19 +66,31 @@ export const usersRoute = new Elysia()
     "/api/users",
     async ({ headers, set }) => {
       try {
-        const authHeader = headers["authorization"];
-        if (!authHeader || !authHeader.startsWith("Bearer ")) {
-          set.status = 401;
-          return {
-            status: "error",
-            message: "token tidak valid atau token expired",
-            data: null,
-          };
-        }
-        const token = authHeader.substring(7);
+        const token = extractToken(headers);
         const data = await getCurrentUser(token);
         set.status = 200;
         return { data };
+      } catch (error: any) {
+        set.status = 401;
+        return {
+          status: "error",
+          message: error.message ?? "token tidak valid atau token expired",
+          data: null,
+        };
+      }
+    }
+  )
+  .delete(
+    "/api/users/logout",
+    async ({ headers, set }) => {
+      try {
+        const token = extractToken(headers);
+        await logoutUser(token);
+        set.status = 200;
+        return {
+          status: "success",
+          message: "User logged out successfully",
+        };
       } catch (error: any) {
         set.status = 401;
         return {

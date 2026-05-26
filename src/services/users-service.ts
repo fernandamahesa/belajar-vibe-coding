@@ -87,3 +87,13 @@ export async function getCurrentUser(token: string) {
     createdAt: user[0].createdAt,
   };
 }
+
+export async function logoutUser(token: string) {
+  const result = await db
+    .delete(sessions)
+    .where(and(eq(sessions.token, token), gt(sessions.expiredAt, new Date())));
+
+  if (result[0].affectedRows === 0) {
+    throw new Error("token tidak valid atau token expired");
+  }
+}
