@@ -1,5 +1,5 @@
 import { db } from "../db";
-import { users } from "../db/schema";
+import { users, sessions } from "../db/schema";
 import { eq } from "drizzle-orm";
 
 export interface RegisterPayload {
@@ -33,4 +33,28 @@ export async function registerUser({ name, email, password }: Required<RegisterP
     name,
     email,
   };
+}
+
+export async function loginUser(email: string, password: string) {
+  const existingUser = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  if (existingUser.length === 0) {
+    throw new Error("email atau password salah");
+  }
+
+  const user = existingUser[0];
+  const isPasswordValid = await Bun.password.verify(password, user.password);
+  if (!isPasswordValid) {
+    throw new Error("email atau password salah");
+  }
+
+  const token = crypto.randomUUID();
+  const expiredAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+  await db.insert(sessions).values({
+    token,
+    userId: user.id,
+    expiredAt,
+  });
+
+  return { token };
 }
