@@ -89,15 +89,11 @@ export async function getCurrentUser(token: string) {
 }
 
 export async function logoutUser(token: string) {
-  const session = await db
-    .select()
-    .from(sessions)
-    .where(and(eq(sessions.token, token), gt(sessions.expiredAt, new Date())))
-    .limit(1);
+  const result = await db
+    .delete(sessions)
+    .where(and(eq(sessions.token, token), gt(sessions.expiredAt, new Date())));
 
-  if (session.length === 0) {
+  if (result[0].affectedRows === 0) {
     throw new Error("token tidak valid atau token expired");
   }
-
-  await db.delete(sessions).where(eq(sessions.token, token));
 }
