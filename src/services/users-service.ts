@@ -1,6 +1,6 @@
 import { db } from "../db";
 import { users, sessions } from "../db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and, gt } from "drizzle-orm";
 
 export interface RegisterPayload {
   name: string;
@@ -57,4 +57,33 @@ export async function loginUser(email: string, password: string) {
   });
 
   return { token };
+}
+
+export async function getCurrentUser(token: string) {
+  const session = await db
+    .select()
+    .from(sessions)
+    .where(and(eq(sessions.token, token), gt(sessions.expiredAt, new Date())))
+    .limit(1);
+
+  if (session.length === 0) {
+    throw new Error("token tidak valid atau token expired");
+  }
+
+  const user = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, session[0].userId))
+    .limit(1);
+
+  if (user.length === 0) {
+    throw new Error("token tidak valid atau token expired");
+  }
+
+  return {
+    id: user[0].id,
+    name: user[0].name,
+    email: user[0].email,
+    createdAt: user[0].createdAt,
+  };
 }

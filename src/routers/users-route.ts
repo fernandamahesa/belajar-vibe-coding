@@ -1,5 +1,5 @@
 import { Elysia, t } from "elysia";
-import { registerUser, loginUser } from "../services/users-service";
+import { registerUser, loginUser, getCurrentUser } from "../services/users-service";
 
 export const usersRoute = new Elysia()
   .post(
@@ -52,5 +52,32 @@ export const usersRoute = new Elysia()
         email: t.String({ format: "email" }),
         password: t.String({ minLength: 6 }),
       }),
+    }
+  )
+  .get(
+    "/api/users",
+    async ({ headers, set }) => {
+      try {
+        const authHeader = headers["authorization"];
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+          set.status = 401;
+          return {
+            status: "error",
+            message: "token tidak valid atau token expired",
+            data: null,
+          };
+        }
+        const token = authHeader.substring(7);
+        const data = await getCurrentUser(token);
+        set.status = 200;
+        return { data };
+      } catch (error: any) {
+        set.status = 401;
+        return {
+          status: "error",
+          message: error.message ?? "token tidak valid atau token expired",
+          data: null,
+        };
+      }
     }
   );
