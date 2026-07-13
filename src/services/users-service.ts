@@ -8,6 +8,7 @@ export interface RegisterPayload {
   password?: string;
 }
 
+/** Mendaftarkan user baru ke dalam sistem. Mengecek duplikasi email, mengenkripsi password dengan bcrypt, lalu menyimpan user ke database. */
 export async function registerUser({ name, email, password }: Required<RegisterPayload>) {
   // 1. Check if email already exists
   const existingUser = await db.select().from(users).where(eq(users.email, email)).limit(1);
@@ -35,6 +36,7 @@ export async function registerUser({ name, email, password }: Required<RegisterP
   };
 }
 
+/** Memverifikasi email dan password user. Jika cocok, membuat session baru dengan token UUID dan mengembalikan token tersebut. */
 export async function loginUser(email: string, password: string) {
   const existingUser = await db.select().from(users).where(eq(users.email, email)).limit(1);
   if (existingUser.length === 0) {
@@ -59,6 +61,7 @@ export async function loginUser(email: string, password: string) {
   return { token };
 }
 
+/** Mendapatkan data user yang sedang login berdasarkan token session. Token harus valid dan belum expired. */
 export async function getCurrentUser(token: string) {
   const session = await db
     .select()
@@ -88,6 +91,7 @@ export async function getCurrentUser(token: string) {
   };
 }
 
+/** Menghapus session token dari database (logout). Melempar error jika token tidak valid atau sudah expired. */
 export async function logoutUser(token: string) {
   const result = await db
     .delete(sessions)
