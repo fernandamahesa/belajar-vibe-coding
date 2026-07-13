@@ -36,6 +36,26 @@ export const usersRoute = new Elysia()
         email: t.String({ format: "email", maxLength: 100 }),
         password: t.String({ minLength: 6, maxLength: 255 }),
       }),
+      detail: {
+        summary: "Register user baru",
+        description: "Mendaftarkan user baru dengan name, email, dan password.",
+        tags: ["Users"],
+      },
+      response: {
+        201: t.Object({
+          status: t.String(),
+          message: t.String(),
+          data: t.Object({
+            name: t.String(),
+            email: t.String(),
+          }),
+        }),
+        400: t.Object({
+          status: t.String(),
+          message: t.String(),
+          data: t.Null(),
+        }),
+      },
     }
   )
   .post(
@@ -60,6 +80,20 @@ export const usersRoute = new Elysia()
         email: t.String({ format: "email", maxLength: 100 }),
         password: t.String({ minLength: 6, maxLength: 255 }),
       }),
+      detail: {
+        summary: "Login user",
+        description: "Login dengan email dan password. Mengembalikan token session.",
+        tags: ["Users"],
+      },
+      response: {
+        200: t.Object({
+          data: t.String(),
+        }),
+        401: t.Object({
+          status: t.String(),
+          message: t.String(),
+        }),
+      },
     }
   )
   .get(
@@ -78,6 +112,29 @@ export const usersRoute = new Elysia()
           data: null,
         };
       }
+    },
+    {
+      detail: {
+        summary: "Ambil user saat ini",
+        description: "Mengembalikan data user berdasarkan token Bearer yang dikirim di header Authorization.",
+        tags: ["Users"],
+        security: [{ bearerAuth: [] }],
+      },
+      response: {
+        200: t.Object({
+          data: t.Object({
+            id: t.Number(),
+            name: t.String(),
+            email: t.String(),
+            createdAt: t.Date(),
+          }),
+        }),
+        401: t.Object({
+          status: t.String(),
+          message: t.String(),
+          data: t.Null(),
+        }),
+      },
     }
   )
   .delete(
@@ -99,5 +156,24 @@ export const usersRoute = new Elysia()
           data: null,
         };
       }
+    },
+    {
+      detail: {
+        summary: "Logout user",
+        description: "Menghapus session token (logout). Membutuhkan Bearer Token.",
+        tags: ["Users"],
+        security: [{ bearerAuth: [] }],
+      },
+      response: {
+        200: t.Object({
+          status: t.String(),
+          message: t.String(),
+        }),
+        401: t.Object({
+          status: t.String(),
+          message: t.String(),
+          data: t.Null(),
+        }),
+      },
     }
   );
